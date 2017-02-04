@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Project1</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/three.min.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/NoiseGenerator.js"></script>
+		<script src="js/MaterialsGenerator.js"></script>
+
+		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+
+		<script>
+			if ( !Detector.webgl ) {
+				Detector.addGetWebGLMessage();
+				document.getElementById('container').innerHTML = "";
+			}
+
+			var camera, controls, scene, renderer;
+			var mesh, texture;
+
+			var all_fireworks = [];
+
+			var worldWidth = 256;
+			var worldDepth = 256;
+
+			var clock = new THREE.Clock();
+
+			init();
+			animate();
+
+
+			function init() {
+				camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
+
+				camera.position.x = 300;
+
+				scene = new THREE.Scene();
+
+				var plane = new THREE.PlaneBufferGeometry( 7500, 7500, worldWidth - 1, worldDepth - 1);
+				plane.rotateX( - Math.PI / 2 );
+
+				var vertices = plane.attributes.position.array;
+				var p_data = generateRandomArray(worldWidth);
+				var heightMap = createHeightMap(worldWidth, worldDepth, p_data);
+
+				camera.position.y = heightMap[ worldWidth / 2 + worldDepth / 2 * worldWidth ] * 8 + 100;
+
+				for (var i = 0, j = 0, l = vertices.length; i < l; i++, j += 3) {
+					vertices[j + 1] = heightMap[i] * 8;
+				};
+
+				plane.attributes.position.array = vertices;
+
+				var mountain_texture = new THREE.TextureLoader().load("images/dark-mountain.jpg");
+				mountain_texture.wrapS = THREE.RepeatWrapping;
+				mountain_texture.wrapT = THREE.RepeatWrapping;
+				mountain_texture.repeat.set(2, 2);
+
+				var mountain_material = new THREE.MeshBasicMaterial( {map: mountain_texture});
+				var mountain_mesh = new THREE.Mesh( plane, mountain_material );
+				scene.add( mountain_mesh );
+
+				var sky = new THREE.SphereGeometry(1000, 80, 80);
+				var sky_material = new THREE.MeshBasicMaterial( {color: 0x000000});
+
+				var star_geometry = new THREE.Geometry();
+				var starMap = generateStars(1000);
+
+				var star_material = new THREE.ParticleBasicMaterial({
+					color: 0xffffff,
+					map: THREE.ImageUtils.loadTexture("images/particle.jpg"),
+					size: 5
+				});
+
+				for (var i = 0; i < starMap.length; i += 3) {
+					var v = new THREE.Vector3(starMap[i], starMap[i + 1], starMap[i + 2]);
+					star_geometry.vertices.push(v);
+				}
+
+				var star_system = new THREE.ParticleSystem( star_geometry, star_material );
+
+				scene.add( star_system );	
+
+				var sky_mesh = new THREE.Mesh( sky, sky_material);
+				sky_mesh.material.side = THREE.BackSide;
+				scene.add( sky_mesh );
+
+				var moon_geometry = new THREE.SphereGeometry(4, 50, 50);
+				var moon_material = new THREE.MeshBasicMaterial({
+					color: 0xfee5ac
+				});
+				var moon = new THREE.Mesh(moon_geometry, moon_material);
+				moon.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
+				moon.material.side = THREE.BackSide;
+				scene.add(moon);
+
+				var moonlight = new THREE.PointLight(0xfee5ac, 10, 0, 2);
+				moonlight.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
+				scene.add( moonlight );
+
+				createFireworks(1);
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setClearColor( 0x87cefa );
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
+
+				var container = document.getElementById("container");
+
+				container.innerHTML = "";
+				container.appendChild(renderer.domElement);
+
+			}
+
+			function animate() {
+				updateFireworks();
+
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+				
+//				camera.rotation.y -= 0.001;
+//				camera.rotation.x -= 10;
+//				camera.rotation.x += 0.001;
+			}
+
+			function createFireworks(num) {
+				for (var i = 0; i < num; i++) {
+					if (shouldMakeFirework()) {
+						var fireworks_geometry = new THREE.Geometry();
+						for (var j = 0; j < 5; j++) {
+							var firework = new THREE.Vector3();
+							firework.velocity = [Math.random(), Math.random(), Math.random()];
+							fireworks_geometry.vertices.push( firework );
+						}
+						var fireworks_material = new THREE.ParticleBasicMaterial({
+							size: 2,
+							color: getRandomColor()
+						});
+
+						var fireworks = new THREE.ParticleSystem( fireworks_geometry, fireworks_material );
+
+						var firework_obj = {
+							geometry: fireworks_geometry,
+							material: fireworks_material,
+							system: fireworks
+						};
+
+						all_fireworks.push(firework_obj);
+					}
+				}
+				console.log(all_fireworks);
+			}
+
+			function updateFireworks() {
+				for (var i = 0; i < all_fireworks.length; i++) {
+					console.log( all_fireworks.system );
+					scene.add( all_fireworks.system );
+				}
+			}
+		</script>
+
+	</body>
+</html>

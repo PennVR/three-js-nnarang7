@@ -26,6 +26,8 @@
 
 			var all_fireworks = [];
 
+			var firework_id = 0;
+
 			var worldWidth = 256;
 			var worldDepth = 256;
 
@@ -104,7 +106,7 @@
 				moonlight.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
 				scene.add( moonlight );
 
-				createFireworks(1);
+				createFireworks(1000);
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setClearColor( 0x87cefa );
@@ -119,9 +121,10 @@
 			}
 
 			function animate() {
-				updateFireworks();
-
 				requestAnimationFrame( animate );
+
+				updateFireworks();	
+							
 				renderer.render( scene, camera );
 				
 //				camera.rotation.y -= 0.001;
@@ -132,36 +135,162 @@
 			function createFireworks(num) {
 				for (var i = 0; i < num; i++) {
 					if (shouldMakeFirework()) {
+//						console.log("making firework");
+						
+						var x = Math.random() * 700 - 200;
+						var y = Math.random() * 700 - 380;
+						var z = Math.random() * 600 - 250;						
+
+						// var x = THREE.Math.randInt(camera.position.x - 150, camera.position.x + 150);
+						// var y = THREE.Math.randInt(camera.position.y - 50, camera.position.y + 50);
+						// var z = THREE.Math.randInt(camera.position.z - 10, camera.position.z + 10);
+
+
+						var start = new THREE.Vector3(x, 0, z);
+						var end = new THREE.Vector3(x, y, z);
+
+						var color = getRandomColor();
+
 						var fireworks_geometry = new THREE.Geometry();
-						for (var j = 0; j < 5; j++) {
-							var firework = new THREE.Vector3();
-							firework.velocity = [Math.random(), Math.random(), Math.random()];
-							fireworks_geometry.vertices.push( firework );
-						}
-						var fireworks_material = new THREE.ParticleBasicMaterial({
-							size: 2,
-							color: getRandomColor()
+
+						fireworks_geometry.vertices.push(start);
+
+						var fireworks_material = new THREE.PointsMaterial({
+							size: 10,
+							color: 0xff69b4
 						});
 
-						var fireworks = new THREE.ParticleSystem( fireworks_geometry, fireworks_material );
+						var fireworks = new THREE.Points( fireworks_geometry, fireworks_material );
 
 						var firework_obj = {
 							geometry: fireworks_geometry,
 							material: fireworks_material,
-							system: fireworks
+							system: fireworks,
+							dest: [end],
+							name: "fireworks" + firework_id
 						};
+
+						fireworks.name = firework_obj.name;
+
+						scene.add( fireworks );						
+
+						firework_id++;
 
 						all_fireworks.push(firework_obj);
 					}
 				}
-				console.log(all_fireworks);
 			}
 
 			function updateFireworks() {
+
 				for (var i = 0; i < all_fireworks.length; i++) {
-					console.log( all_fireworks.system );
-					scene.add( all_fireworks.system );
+					var current_firework = all_fireworks[i];
+					var all_points = current_firework.geometry.vertices;
+
+					var to_remove = scene.getObjectByName(current_firework.name);
+
+//					console.log(to_remove);
+
+//					scene.remove( to_remove );
+
+					for (var j = 0; j < all_points.length; j++) {
+						all_points[j].x += (current_firework.dest[j].x - all_points[j].x) / 30;
+						all_points[j].y += (current_firework.dest[j].y - all_points[j].y) / 30;
+						all_points[j].z += (current_firework.dest[j].z - all_points[j].z) / 30;
+					}
+					all_fireworks[i].geometry.vertices = all_points;
+					all_fireworks[i].geometry.verticesNeedUpdate = true;
+
+					
+
+					all_fireworks[i].system = new THREE.Points( all_fireworks[i].geometry, all_fireworks[i].material);					
+
+					if (all_points.length == 1) {
+						if (all_points[0].x > all_fireworks[i].dest[0].x ||
+							all_points[0].y > all_fireworks[i].dest[0].y ||
+							all_points[0].z > all_fireworks[i].dest[0].z) {
+//								console.log("removing");
+						
+								var to_remove_obj = scene.getObjectByName( current_firework.name );
+								scene.remove( to_remove_obj );
+						}
+					} else {
+						all_fireworks[i].material.opacity -= 0.05
+						all_fireworks[i].material.colorsNeedUpdate = true;
+
+						if (all_fireworks[i].material.opacity <= 0.0) {
+							remove_firework(i);
+						}
+					}
+
+
+// //					console.log( all_fireworks.system );
+// //					scene.add( all_fireworks.system );
 				}
+
+				for (var j = 0; j < all_fireworks.length; j++) {
+					all_fireworks[j].system.name = all_fireworks[j].name;
+					scene.add( all_fireworks[j].system );
+				}
+			}
+
+			function explode_firework(index) {	
+
+				var to_explode = all_fireworks[index];
+				var to_explore_pos = to_explode.dest[0];
+
+				var to_explode_obj = scene.getObjectByName( to_explode.name );
+
+				scene.remove( to_explode_obj );
+
+				var new_geometry = new THREE.Geometry();
+
+				var new_material = new THREE.PointsMaterial({
+						size: 1,
+						color: 0xff69b4					
+				});
+
+				var new_dest = [];
+
+				for (var i = 0; i < 40; i++) {
+					var particle_color = getRandomColor();
+					var x = THREE.Math.randInt(to_explore_pos.x - 20, to_explore_pos.x + 20);
+					var y = THREE.Math.randInt(to_explore_pos.y - 20, to_explore_pos.y + 20);
+					var z = THREE.Math.randInt(to_explore_pos.z - 20, to_explore_pos.z + 20);
+
+					var x_end = THREE.Math.randInt(to_explore_pos.x - 200, to_explore_pos.x + 200);
+					var y_end = THREE.Math.randInt(to_explore_pos.y - 200, to_explore_pos.y + 200);
+					var z_end = THREE.Math.randInt(to_explore_pos.z - 200, to_explore_pos.z + 200);
+
+					var start = new THREE.Vector3(x, y, z);
+					var end = new THREE.Vector3(x_end, y_end, z_end);	
+
+					new_geometry.vertices.push(start);
+
+					new_geometry.colors.push(particle_color);
+
+					new_dest.push(end);
+				}
+
+				all_fireworks[index].geometry = new_geometry;
+				all_fireworks[index].material = new_material;
+				all_fireworks[index].system = new THREE.Points( new_geometry, new_material );
+				all_fireworks[index].dest = new_dest;
+
+				all_fireworks[index].system.name = all_fireworks[index].name;
+
+				scene.add( all_fireworks[index].system );
+
+			}
+
+			function remove_firework(i) {
+//				console.log("removing " + i);
+				var to_remove = all_fireworks[i];
+//				console.log(to_remove.name);
+				var to_remove_obj = scene.getObjectByName( to_remove.name );
+				console.log(to_remove_obj);
+				scene.remove( to_remove_obj );
+				all_fireworks.splice(i, 1);
 			}
 		</script>
 

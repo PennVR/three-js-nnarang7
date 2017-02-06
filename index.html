@@ -171,8 +171,11 @@
 
 			function render() {
 
-				renderer.render( scene, camera );
-
+				if (navigator.getVRDisplays) {
+					effect.render(scene, camera);
+				} else {
+					renderer.render( scene, camera );
+				}
 			}
 
 			function createFireworks(num) {

@@ -33,7 +33,7 @@ function generateStars(numStars) {
 		var x, y, z;
 
 		var x = THREE.Math.randInt(-500, 500);
-		var y = THREE.Math.randInt(160, 600);
+		var y = THREE.Math.randInt(60, 600);
 		var z = THREE.Math.randInt(-250, 350);			
 
 		while (y < 150) {
@@ -47,7 +47,7 @@ function generateStars(numStars) {
 
 function shouldMakeFirework() {
 	//20% chance of creating a firework
-	return Math.random() <= 0.2;
+	return Math.random() <= 0.1;
 }
 
 function getRandomColor() {

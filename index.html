@@ -29,7 +29,7 @@
 				document.body.appendChild( WEBVR.getMessage() );
 			}
 
-			var camera, controls, effect, scene, renderer;
+			var camera, controls, effect, scene, renderer, orbit_controls;
 			var mesh, texture;
 
 			var all_fireworks = [];
@@ -115,16 +115,16 @@
 				moonlight.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
 				scene.add( moonlight );
 
-				createFireworks(500);
+				createFireworks(1000);
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setClearColor( 0x87cefa );
 				renderer.setPixelRatio(window.devicePixelRatio);
 				renderer.setSize(window.innerWidth, window.innerHeight);
 
-				// controls = new THREE.OrbitControls(camera, renderer.domElement);
-				// controls.addEventListener('change', animate);
-				// controls.enableZoom = false;
+				// orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
+				// orbit_controls.addEventListener('change', animate);
+				// orbit_controls.enableZoom = false;
 
 				var container = document.getElementById("container");
 
@@ -170,10 +170,10 @@
 
 				updateFireworks();					
 
-//				controls.update();
+//				orbit_controls.update();
 
 
-				camera.rotation.y -= 0.005;				
+//				camera.rotation.y -= 0.005;				
 
 				render();
 
@@ -193,16 +193,21 @@
 			function createFireworks(num) {
 				for (var i = 0; i < num; i++) {
 					if (shouldMakeFirework()) {
+
+						var dest_point = [];
 //						console.log("making firework");
 						
 						var x = Math.random() * 700 - 200;
 						var y = Math.random() * 700 - 380;
-						var z = Math.random() * 600 - 250;						
+						var z = Math.random() * 600 - 250;		
+
+						// var x = THREE.Math.randInt(200, 410);
+						// var y = THREE.Math.randInt(100, 200);
+						// var z = 50;				
 
 						// var x = THREE.Math.randInt(camera.position.x - 150, camera.position.x + 150);
 						// var y = THREE.Math.randInt(camera.position.y - 50, camera.position.y + 50);
 						// var z = THREE.Math.randInt(camera.position.z - 10, camera.position.z + 10);
-
 
 						var start = new THREE.Vector3(x, 0, z);
 						var end = new THREE.Vector3(x, y, z);
@@ -212,29 +217,29 @@
 						var fireworks_geometry = new THREE.Geometry();
 
 						fireworks_geometry.vertices.push(start);
+						fireworks_geometry.colors.push(0xff69b4);
+
+						fireworks_geometry.verticesNeedUpdate = true;
 
 						var fireworks_material = new THREE.PointsMaterial({
 							size: 10,
 							color: 0xff69b4
 						});
 
-						var fireworks = new THREE.Points( fireworks_geometry, fireworks_material );
+						dest_point.push(end);
 
 						var firework_obj = {
 							geometry: fireworks_geometry,
 							material: fireworks_material,
-							system: fireworks,
-							dest: [end],
+							system: new THREE.Points( fireworks_geometry, fireworks_material ),
+							dest: dest_point,
 							name: "fireworks" + firework_id
 						};
 
-						fireworks.name = firework_obj.name;
-
-						scene.add( fireworks );						
-
 						firework_id++;
 
-						all_fireworks.push(firework_obj);
+						all_fireworks.push(firework_obj);						
+						scene.add( firework_obj.system );						
 					}
 				}
 			}
@@ -245,26 +250,27 @@
 					var current_firework = all_fireworks[i];
 					var all_points = current_firework.geometry.vertices;
 
-					var to_remove = scene.getObjectByName(all_fireworks[i].name);
-
-//					console.log(to_remove);
-
-					scene.remove( to_remove );
-
 					for (var j = 0; j < all_points.length; j++) {
-						all_points[j].x += (all_fireworks[i].dest[j].x - all_points[j].x) / 3;
-						all_points[j].y += (all_fireworks[i].dest[j].y - all_points[j].y) / 3;
-						all_points[j].z += (all_fireworks[i].dest[j].z - all_points[j].z) / 3;
+						all_points[j].x += (all_fireworks[i].dest[j].x - all_points[j].x) / 5;
+						all_points[j].y += (all_fireworks[i].dest[j].y - all_points[j].y) / 5;
+						all_points[j].z += (all_fireworks[i].dest[j].z - all_points[j].z) / 5;
 					}
 					all_fireworks[i].geometry.vertices = all_points;
 					all_fireworks[i].geometry.verticesNeedUpdate = true;
-
-					all_fireworks[i].system = new THREE.Points( all_fireworks[i].geometry, all_fireworks[i].material);	
 
 					if (all_points.length == 1) {
 						if (all_points[0].x > all_fireworks[i].dest[0].x ||
 							all_points[0].y > all_fireworks[i].dest[0].y ||
 							all_points[0].z > all_fireworks[i].dest[0].z) {
+
+// 								var to_remove_obj = scene.getObjectByName( all_fireworks[i].name );
+
+// 								all_fireworks.splice(i, 1);
+// //								console.log(to_remove_obj);
+// 								scene.remove( to_remove_obj );	
+
+								// console.log(scene.getObjectByName(all_fireworks[i].name));						
+
 								explode_firework(i);
 // 								var to_remove_obj = scene.getObjectByName( all_fireworks[i].name );
 
@@ -273,29 +279,13 @@
 // 								scene.remove( to_remove_obj );	
 						}
 					} else {
-						all_fireworks[i].material.opacity -= 0.05
+						all_fireworks[i].material.opacity -= 0.01
 						all_fireworks[i].material.colorsNeedUpdate = true;
 
 						if (all_fireworks[i].material.opacity <= 0.0) {
-//								console.log("removing1 " + all_fireworks[i].name);
-
-								var to_remove_obj = scene.getObjectByName( all_fireworks[i].name );
-
-								all_fireworks.splice(i, 1);
-//								console.log(to_remove_obj);
-								scene.remove( to_remove_obj );							
-						//	remove_firework(i);
+							remove_firework(i);						
 						}
 					}
-
-
-// //					console.log( all_fireworks.system );
-//					scene.add( all_fireworks.system );
-				}
-
-				for (var j = 0; j < all_fireworks.length; j++) {
-					all_fireworks[j].system.name = all_fireworks[j].name;
-					scene.add( all_fireworks[j].system );
 				}
 			}
 
@@ -304,15 +294,12 @@
 				var to_explode = all_fireworks[index];
 				var to_explore_pos = to_explode.dest[0];
 
-				var to_explode_obj = scene.getObjectByName( to_explode.name );
-
-				scene.remove( to_explode_obj );
-
 				var new_geometry = new THREE.Geometry();
 
 				var new_material = new THREE.PointsMaterial({
 						size: 5,
-						color: 0x39ff14					
+						color: 0x39ff14,
+						opacity: 1.0			
 				});
 
 				var new_dest = [];
@@ -340,8 +327,10 @@
 				all_fireworks[index].geometry = new_geometry;
 				all_fireworks[index].geometry.verticesNeedUpdate = true;
 				all_fireworks[index].material = new_material;
-				all_fireworks[index].system = new THREE.Points( new_geometry, new_material );
+				all_fireworks[index].system = new THREE.Points( all_fireworks[index].geometry, all_fireworks[index].material );
 				all_fireworks[index].dest = new_dest;
+				all_fireworks[index].name = "firework" + firework_id;
+				firework_id++;
 
 				all_fireworks[index].system.name = all_fireworks[index].name;
 
@@ -350,11 +339,8 @@
 			}
 
 			function remove_firework(i) {
-//				console.log("removing " + i);
 				var to_remove = all_fireworks[i];
-//				console.log(to_remove.name);
 				var to_remove_obj = scene.getObjectByName( to_remove.name );
-//				console.log(to_remove_obj);
 				scene.remove( to_remove_obj );
 				all_fireworks.splice(i, 1);
 			}

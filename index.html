@@ -115,7 +115,7 @@
 				moonlight.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
 				scene.add( moonlight );
 
-				createFireworks(1000);
+				createFireworks(5);
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setClearColor( 0x87cefa );
@@ -147,7 +147,6 @@
 						.catch(() => {});					
 				}	
 
-
 				window.addEventListener('resize', () => {
 					camera.aspect = window.innerWidth / window.innerHeight;
 					camera.updateProjectionMatrix();
@@ -158,7 +157,6 @@
 						renderer.setSize(window.innerWidth, window.innerHeight);
 					}
 				});
-
 			}
 
 			function animate() {
@@ -168,10 +166,11 @@
 					requestAnimationFrame( animate );					
 				}
 
-				updateFireworks();					
+				updateFireworks();		
+
+				createFireworks(2);			
 
 //				orbit_controls.update();
-
 
 //				camera.rotation.y -= 0.005;				
 
@@ -195,21 +194,12 @@
 					if (shouldMakeFirework()) {
 
 						var dest_point = [];
-//						console.log("making firework");
 						
-						var x = Math.random() * 700 - 200;
-						var y = Math.random() * 700 - 380;
-						var z = Math.random() * 600 - 250;		
+						var x = THREE.Math.randInt(-1000, 1000);
+						var y = THREE.Math.randInt(250, 450);
+						var z = THREE.Math.randInt(-600, -100);	
 
-						// var x = THREE.Math.randInt(200, 410);
-						// var y = THREE.Math.randInt(100, 200);
-						// var z = 50;				
-
-						// var x = THREE.Math.randInt(camera.position.x - 150, camera.position.x + 150);
-						// var y = THREE.Math.randInt(camera.position.y - 50, camera.position.y + 50);
-						// var z = THREE.Math.randInt(camera.position.z - 10, camera.position.z + 10);
-
-						var start = new THREE.Vector3(x, 0, z);
+						var start = new THREE.Vector3(x, -2000, z);
 						var end = new THREE.Vector3(x, y, z);
 
 						var color = getRandomColor();
@@ -217,13 +207,13 @@
 						var fireworks_geometry = new THREE.Geometry();
 
 						fireworks_geometry.vertices.push(start);
-						fireworks_geometry.colors.push(0xff69b4);
+						fireworks_geometry.colors.push(getRandomColor());
 
 						fireworks_geometry.verticesNeedUpdate = true;
 
 						var fireworks_material = new THREE.PointsMaterial({
 							size: 10,
-							color: 0xff69b4
+							color: getRandomColor()
 						});
 
 						dest_point.push(end);
@@ -238,7 +228,9 @@
 
 						firework_id++;
 
-						all_fireworks.push(firework_obj);						
+						firework_obj.system.name = firework_obj.name;				
+
+						all_fireworks.push(firework_obj);		
 						scene.add( firework_obj.system );						
 					}
 				}
@@ -250,33 +242,28 @@
 					var current_firework = all_fireworks[i];
 					var all_points = current_firework.geometry.vertices;
 
-					for (var j = 0; j < all_points.length; j++) {
-						all_points[j].x += (all_fireworks[i].dest[j].x - all_points[j].x) / 5;
-						all_points[j].y += (all_fireworks[i].dest[j].y - all_points[j].y) / 5;
-						all_points[j].z += (all_fireworks[i].dest[j].z - all_points[j].z) / 5;
+					if (all_points.length == 1) {
+						all_points[0].x += (all_fireworks[i].dest[0].x - all_points[0].x) / 100000;
+						all_points[0].y += (all_fireworks[i].dest[0].y - all_points[0].y) / 100000;
+						all_points[0].z += (all_fireworks[i].dest[0].z - all_points[0].z) / 100000;
+					} else {
+						for (var j = 0; j < all_points.length; j++) {
+							all_points[j].x += (all_fireworks[i].dest[j].x - all_points[j].x) / 50;
+							all_points[j].y += (all_fireworks[i].dest[j].y - all_points[j].y) / 50;
+							all_points[j].z += (all_fireworks[i].dest[j].z - all_points[j].z) / 50;
+						}						
 					}
 					all_fireworks[i].geometry.vertices = all_points;
 					all_fireworks[i].geometry.verticesNeedUpdate = true;
 
+					all_fireworks[i].system = new THREE.Points( all_fireworks[i].geometry, all_fireworks[i].material);	
+
 					if (all_points.length == 1) {
-						if (all_points[0].x > all_fireworks[i].dest[0].x ||
-							all_points[0].y > all_fireworks[i].dest[0].y ||
-							all_points[0].z > all_fireworks[i].dest[0].z) {
-
-// 								var to_remove_obj = scene.getObjectByName( all_fireworks[i].name );
-
-// 								all_fireworks.splice(i, 1);
-// //								console.log(to_remove_obj);
-// 								scene.remove( to_remove_obj );	
-
-								// console.log(scene.getObjectByName(all_fireworks[i].name));						
+						if (all_points[0].x - all_fireworks[i].dest[0].x < 0.000000000001 ||
+							all_points[0].y - all_fireworks[i].dest[0].y < 0.000000000001 ||
+							all_points[0].z - all_fireworks[i].dest[0].z < 0.000000000001) {
 
 								explode_firework(i);
-// 								var to_remove_obj = scene.getObjectByName( all_fireworks[i].name );
-
-// 								all_fireworks.splice(i, 1);
-// //								console.log(to_remove_obj);
-// 								scene.remove( to_remove_obj );	
 						}
 					} else {
 						all_fireworks[i].material.opacity -= 0.01
@@ -298,7 +285,7 @@
 
 				var new_material = new THREE.PointsMaterial({
 						size: 5,
-						color: 0x39ff14,
+						color: getRandomColor(),
 						opacity: 1.0			
 				});
 
@@ -310,16 +297,16 @@
 					var y = THREE.Math.randInt(to_explore_pos.y - 20, to_explore_pos.y + 20);
 					var z = THREE.Math.randInt(to_explore_pos.z - 20, to_explore_pos.z + 20);
 
-					var x_end = THREE.Math.randInt(to_explore_pos.x - 200, to_explore_pos.x + 200);
-					var y_end = THREE.Math.randInt(to_explore_pos.y - 200, to_explore_pos.y + 200);
-					var z_end = THREE.Math.randInt(to_explore_pos.z - 200, to_explore_pos.z + 200);
+					var x_end = THREE.Math.randInt(to_explore_pos.x - 100, to_explore_pos.x + 100);
+					var y_end = THREE.Math.randInt(to_explore_pos.y - 100, to_explore_pos.y + 100);
+					var z_end = THREE.Math.randInt(to_explore_pos.z - 100, to_explore_pos.z + 100);
 
 					var start = new THREE.Vector3(x, y, z);
 					var end = new THREE.Vector3(x_end, y_end, z_end);	
 
 					new_geometry.vertices.push(start);
 
-					new_geometry.colors.push(0x39ff14);
+					new_geometry.colors.push(getRandomColor());
 
 					new_dest.push(end);
 				}
@@ -329,13 +316,12 @@
 				all_fireworks[index].material = new_material;
 				all_fireworks[index].system = new THREE.Points( all_fireworks[index].geometry, all_fireworks[index].material );
 				all_fireworks[index].dest = new_dest;
-				all_fireworks[index].name = "firework" + firework_id;
+				all_fireworks[index].name = "fireworks" + firework_id;
 				firework_id++;
 
 				all_fireworks[index].system.name = all_fireworks[index].name;
 
 				scene.add( all_fireworks[index].system );
-
 			}
 
 			function remove_firework(i) {

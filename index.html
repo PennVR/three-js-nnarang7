@@ -131,17 +131,30 @@
 				container.innerHTML = "";
 				container.appendChild(renderer.domElement);
 
-				controls = new THREE.VRControls( camera );
-				var effect = new THREE.VREffect( renderer );
+
 				if ( WEBVR.isAvailable() === true ) {
 					document.body.appendChild( WEBVR.getButton( effect ) );
-				}				
+				}
+
+				if (navigator.getVRDisplays) {
+					controls = new THREE.VRControls( camera );
+					var effect = new THREE.VREffect( renderer );
+					navigator.getVRDisplays()
+						.then((displays) => {
+							effect.setVRDisplay(displays[0]);
+							controls.setVRDisplay(displays[0]);
+						})
+						.catch(() => {});					
+				}	
 
 			}
 
 			function animate() {
-
-				requestAnimationFrame( animate );
+				if (navigator.getVRDisplays) {
+					effect.requestAnimationFrame(animate);
+				} else {
+					requestAnimationFrame( animate );					
+				}
 
 				updateFireworks();					
 

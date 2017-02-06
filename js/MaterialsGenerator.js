@@ -31,9 +31,10 @@ function generateStars(numStars) {
 	var starMap = [];
 	for (var i = 0; i < numStars; i++) {
 		var x, y, z;
-		x = Math.random() * 800 - 300;
-		y = Math.random() * 900 - 300;
-		z = Math.random() * 600 - 250;
+
+		var x = THREE.Math.randInt(-500, 500);
+		var y = THREE.Math.randInt(160, 600);
+		var z = THREE.Math.randInt(-250, 350);			
 
 		while (y < 150) {
 			y = Math.random() * 500 - 300;

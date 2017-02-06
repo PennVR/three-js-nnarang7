@@ -67,13 +67,13 @@
 
 				plane.attributes.position.array = vertices;
 
-				// var mountain_texture = new THREE.TextureLoader().load("images/dark-mountain.jpg");
-				// mountain_texture.wrapS = THREE.RepeatWrapping;
-				// mountain_texture.wrapT = THREE.RepeatWrapping;
-				// mountain_texture.repeat.set(2, 2);
+				var mountain_texture = new THREE.TextureLoader().load("images/dark-mountain.jpg");
+				mountain_texture.wrapS = THREE.RepeatWrapping;
+				mountain_texture.wrapT = THREE.RepeatWrapping;
+				mountain_texture.repeat.set(2, 2);
 
-//				var mountain_material = new THREE.MeshBasicMaterial( {map: mountain_texture});
-				var mountain_material = new THREE.MeshBasicMaterial({color: 0xffffff});
+				// var mountain_material = new THREE.MeshBasicMaterial( {map: mountain_texture});
+				var mountain_material = new THREE.MeshBasicMaterial({color: 0x654321});
 				var mountain_mesh = new THREE.Mesh( plane, mountain_material );
 				scene.add( mountain_mesh );
 
@@ -81,10 +81,10 @@
 				var sky_material = new THREE.MeshBasicMaterial( {color: 0x000000});
 
 				var star_geometry = new THREE.Geometry();
-				var starMap = generateStars(1000);
+				var starMap = generateStars(5000);
 
 				var star_material = new THREE.ParticleBasicMaterial({
-					color: 0xffffff,
+					color: 0xffff00,
 //					map: THREE.ImageUtils.loadTexture("images/particle.jpg"),
 					size: 5
 				});
@@ -199,7 +199,7 @@
 						var y = THREE.Math.randInt(250, 450);
 						var z = THREE.Math.randInt(-600, -100);	
 
-						var start = new THREE.Vector3(x, -2000, z);
+						var start = new THREE.Vector3(x, -4000, z);
 						var end = new THREE.Vector3(x, y, z);
 
 						var color = getRandomColor();
@@ -213,7 +213,10 @@
 
 						var fireworks_material = new THREE.PointsMaterial({
 							size: 10,
-							color: getRandomColor()
+							color: getRandomColor(),
+							opacity: 1,
+							vertexColors: true,
+							transparent: true
 						});
 
 						dest_point.push(end);
@@ -262,7 +265,6 @@
 						if (all_points[0].x - all_fireworks[i].dest[0].x < 0.000000000001 ||
 							all_points[0].y - all_fireworks[i].dest[0].y < 0.000000000001 ||
 							all_points[0].z - all_fireworks[i].dest[0].z < 0.000000000001) {
-
 								explode_firework(i);
 						}
 					} else {

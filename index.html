@@ -29,7 +29,7 @@
 				document.body.appendChild( WEBVR.getMessage() );
 			}
 
-			var camera, controls, scene, renderer;
+			var camera, controls, effect, scene, renderer;
 			var mesh, texture;
 
 			var all_fireworks = [];
@@ -138,7 +138,7 @@
 
 				if (navigator.getVRDisplays) {
 					controls = new THREE.VRControls( camera );
-					var effect = new THREE.VREffect( renderer );
+					effect = new THREE.VREffect( renderer );
 					navigator.getVRDisplays()
 						.then((displays) => {
 							effect.setVRDisplay(displays[0]);
@@ -146,6 +146,18 @@
 						})
 						.catch(() => {});					
 				}	
+
+
+				window.addEventListener('resize', () => {
+					camera.aspect = window.innerWidth / window.innerHeight;
+					camera.updateProjectionMatrix();
+
+					if (navigator.getVRDisplays) {
+						effect.setSize(window.innerWidth, window.innerHeight);
+					} else {
+						renderer.setSize(window.innerWidth, window.innerHeight);
+					}
+				});
 
 			}
 

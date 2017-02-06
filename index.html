@@ -32,6 +32,8 @@
 			var camera, controls, effect, scene, renderer, orbit_controls;
 			var mesh, texture;
 
+			var vr_enabled = false;
+
 			var all_fireworks = [];
 
 			var firework_id = 0;
@@ -46,6 +48,11 @@
 
 
 			function init() {
+
+				var regen_button = makeRegenerateButton();
+
+				document.body.appendChild(regen_button);
+
 				camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
 
 				camera.position.x = 300;
@@ -68,13 +75,15 @@
 				plane.attributes.position.array = vertices;
 
 				var mountain_texture = new THREE.TextureLoader().load("images/dark-mountain.jpg");
-				mountain_texture.wrapS = THREE.RepeatWrapping;
-				mountain_texture.wrapT = THREE.RepeatWrapping;
-				mountain_texture.repeat.set(2, 2);
+				mountain_texture.wrapS = THREE.ClampToEdgeWrapping;
+				mountain_texture.wrapT = THREE.ClampToEdgeWrapping;
 
-				// var mountain_material = new THREE.MeshBasicMaterial( {map: mountain_texture});
-				var mountain_material = new THREE.MeshBasicMaterial({color: 0x654321});
+				var mountain_material = new THREE.MeshBasicMaterial( {
+					map: mountain_texture
+				});
+//				var mountain_material = new THREE.MeshBasicMaterial({color: 0x654321});
 				var mountain_mesh = new THREE.Mesh( plane, mountain_material );
+				mountain_mesh.position.set(0, -100, 0);
 				scene.add( mountain_mesh );
 
 				var sky = new THREE.SphereGeometry(1000, 80, 80);
@@ -84,8 +93,8 @@
 				var starMap = generateStars(5000);
 
 				var star_material = new THREE.ParticleBasicMaterial({
-					color: 0xffff00,
-//					map: THREE.ImageUtils.loadTexture("images/particle.jpg"),
+					color: 0xffffff,
+					map: new THREE.TextureLoader().load("images/particle.jpg"),
 					size: 5
 				});
 
@@ -122,9 +131,9 @@
 				renderer.setPixelRatio(window.devicePixelRatio);
 				renderer.setSize(window.innerWidth, window.innerHeight);
 
-				// orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
-				// orbit_controls.addEventListener('change', animate);
-				// orbit_controls.enableZoom = false;
+				orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
+				orbit_controls.addEventListener('change', render);
+				orbit_controls.enableZoom = false;
 
 				var container = document.getElementById("container");
 
@@ -137,6 +146,7 @@
 				}
 
 				if (navigator.getVRDisplays) {
+					vr_enabled = true;
 					controls = new THREE.VRControls( camera );
 					effect = new THREE.VREffect( renderer );
 					navigator.getVRDisplays()
@@ -160,29 +170,20 @@
 			}
 
 			function animate() {
-				if (navigator.getVRDisplays) {
+				if (vr_enabled) {
 					effect.requestAnimationFrame(animate);
 				} else {
 					requestAnimationFrame( animate );					
 				}
 
 				updateFireworks();		
-
-				createFireworks(2);			
-
-//				orbit_controls.update();
-
-//				camera.rotation.y -= 0.005;				
-
+				createFireworks(1);			
+				orbit_controls.update();			
 				render();
-
-//				camera.rotation.x -= 10;
-//				camera.rotation.x += 0.001;
 			}
 
 			function render() {
-
-				if (navigator.getVRDisplays) {
+				if (vr_enabled) {
 					effect.render(scene, camera);
 				} else {
 					renderer.render( scene, camera );
@@ -196,7 +197,7 @@
 						var dest_point = [];
 						
 						var x = THREE.Math.randInt(-1000, 1000);
-						var y = THREE.Math.randInt(250, 450);
+						var y = THREE.Math.randInt(150, 250);
 						var z = THREE.Math.randInt(-600, -100);	
 
 						var start = new THREE.Vector3(x, -4000, z);
@@ -331,6 +332,30 @@
 				var to_remove_obj = scene.getObjectByName( to_remove.name );
 				scene.remove( to_remove_obj );
 				all_fireworks.splice(i, 1);
+			}
+
+			function makeRegenerateButton() {
+				var button = document.createElement( 'button' );
+				button.style.position = 'absolute';
+				button.style.left = 'calc(50% - 50px)';
+				button.style.top = '20px';
+				button.style.width = '100px';
+				button.style.border = '0';
+				button.style.padding = '8px';
+				button.style.cursor = 'pointer';
+				button.style.backgroundColor = '#000';
+				button.style.color = '#fff';
+				button.style.fontFamily = 'sans-serif';
+				button.style.fontSize = '13px';
+				button.style.fontStyle = 'normal';
+				button.style.textAlign = 'center';
+				button.style.zIndex = '999';
+				button.textContent = 'Regenerate scene!';
+				button.onclick = function() {
+					init();
+				};
+
+				return button;				
 			}
 		</script>
 

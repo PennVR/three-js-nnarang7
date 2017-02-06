@@ -67,12 +67,13 @@
 
 				plane.attributes.position.array = vertices;
 
-				var mountain_texture = new THREE.TextureLoader().load("images/dark-mountain.jpg");
-				mountain_texture.wrapS = THREE.RepeatWrapping;
-				mountain_texture.wrapT = THREE.RepeatWrapping;
-				mountain_texture.repeat.set(2, 2);
+				// var mountain_texture = new THREE.TextureLoader().load("images/dark-mountain.jpg");
+				// mountain_texture.wrapS = THREE.RepeatWrapping;
+				// mountain_texture.wrapT = THREE.RepeatWrapping;
+				// mountain_texture.repeat.set(2, 2);
 
-				var mountain_material = new THREE.MeshBasicMaterial( {map: mountain_texture});
+//				var mountain_material = new THREE.MeshBasicMaterial( {map: mountain_texture});
+				var mountain_material = new THREE.MeshBasicMaterial({color: 0xffffff});
 				var mountain_mesh = new THREE.Mesh( plane, mountain_material );
 				scene.add( mountain_mesh );
 
@@ -84,7 +85,7 @@
 
 				var star_material = new THREE.ParticleBasicMaterial({
 					color: 0xffffff,
-					map: THREE.ImageUtils.loadTexture("images/particle.jpg"),
+//					map: THREE.ImageUtils.loadTexture("images/particle.jpg"),
 					size: 5
 				});
 
@@ -258,6 +259,10 @@
 						//	remove_firework(i);
 						}
 					}
+
+
+// //					console.log( all_fireworks.system );
+//					scene.add( all_fireworks.system );
 				}
 
 				for (var j = 0; j < all_fireworks.length; j++) {
@@ -312,7 +317,7 @@
 
 				all_fireworks[index].system.name = all_fireworks[index].name;
 
-//				scene.add( all_fireworks[index].system );
+				scene.add( all_fireworks[index].system );
 
 			}
 

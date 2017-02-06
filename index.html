@@ -12,6 +12,10 @@
 		<script src="js/Detector.js"></script>
 		<script src="js/NoiseGenerator.js"></script>
 		<script src="js/MaterialsGenerator.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/VRControls.js"></script>
+		<script src="js/VREffects.js"></script>
+		<script src="js/WebVR.js"></script>
 
 		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
 
@@ -19,6 +23,10 @@
 			if ( !Detector.webgl ) {
 				Detector.addGetWebGLMessage();
 				document.getElementById('container').innerHTML = "";
+			}
+
+			if ( WEBVR.isAvailable() === false ) {
+				document.body.appendChild( WEBVR.getMessage() );
 			}
 
 			var camera, controls, scene, renderer;
@@ -106,30 +114,51 @@
 				moonlight.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
 				scene.add( moonlight );
 
-				createFireworks(1000);
+				createFireworks(500);
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setClearColor( 0x87cefa );
 				renderer.setPixelRatio(window.devicePixelRatio);
 				renderer.setSize(window.innerWidth, window.innerHeight);
 
+				// controls = new THREE.OrbitControls(camera, renderer.domElement);
+				// controls.addEventListener('change', animate);
+				// controls.enableZoom = false;
+
 				var container = document.getElementById("container");
 
 				container.innerHTML = "";
 				container.appendChild(renderer.domElement);
 
+				controls = new THREE.VRControls( camera );
+				var effect = new THREE.VREffect( renderer );
+				if ( WEBVR.isAvailable() === true ) {
+					document.body.appendChild( WEBVR.getButton( effect ) );
+				}				
+
 			}
 
 			function animate() {
+
 				requestAnimationFrame( animate );
 
-				updateFireworks();	
-							
-				renderer.render( scene, camera );
-				
-//				camera.rotation.y -= 0.001;
+				updateFireworks();					
+
+//				controls.update();
+
+
+				camera.rotation.y -= 0.005;				
+
+				render();
+
 //				camera.rotation.x -= 10;
 //				camera.rotation.x += 0.001;
+			}
+
+			function render() {
+
+				renderer.render( scene, camera );
+
 			}
 
 			function createFireworks(num) {
@@ -183,49 +212,52 @@
 
 			function updateFireworks() {
 
-				for (var i = 0; i < all_fireworks.length; i++) {
+				for (var i = all_fireworks.length - 1; i >= 0; i--) {
 					var current_firework = all_fireworks[i];
 					var all_points = current_firework.geometry.vertices;
 
-					var to_remove = scene.getObjectByName(current_firework.name);
+					var to_remove = scene.getObjectByName(all_fireworks[i].name);
 
 //					console.log(to_remove);
 
-//					scene.remove( to_remove );
+					scene.remove( to_remove );
 
 					for (var j = 0; j < all_points.length; j++) {
-						all_points[j].x += (current_firework.dest[j].x - all_points[j].x) / 30;
-						all_points[j].y += (current_firework.dest[j].y - all_points[j].y) / 30;
-						all_points[j].z += (current_firework.dest[j].z - all_points[j].z) / 30;
+						all_points[j].x += (all_fireworks[i].dest[j].x - all_points[j].x) / 3;
+						all_points[j].y += (all_fireworks[i].dest[j].y - all_points[j].y) / 3;
+						all_points[j].z += (all_fireworks[i].dest[j].z - all_points[j].z) / 3;
 					}
 					all_fireworks[i].geometry.vertices = all_points;
 					all_fireworks[i].geometry.verticesNeedUpdate = true;
 
-					
-
-					all_fireworks[i].system = new THREE.Points( all_fireworks[i].geometry, all_fireworks[i].material);					
+					all_fireworks[i].system = new THREE.Points( all_fireworks[i].geometry, all_fireworks[i].material);	
 
 					if (all_points.length == 1) {
 						if (all_points[0].x > all_fireworks[i].dest[0].x ||
 							all_points[0].y > all_fireworks[i].dest[0].y ||
 							all_points[0].z > all_fireworks[i].dest[0].z) {
-//								console.log("removing");
-						
-								var to_remove_obj = scene.getObjectByName( current_firework.name );
-								scene.remove( to_remove_obj );
+								explode_firework(i);
+// 								var to_remove_obj = scene.getObjectByName( all_fireworks[i].name );
+
+// 								all_fireworks.splice(i, 1);
+// //								console.log(to_remove_obj);
+// 								scene.remove( to_remove_obj );	
 						}
 					} else {
 						all_fireworks[i].material.opacity -= 0.05
 						all_fireworks[i].material.colorsNeedUpdate = true;
 
 						if (all_fireworks[i].material.opacity <= 0.0) {
-							remove_firework(i);
+//								console.log("removing1 " + all_fireworks[i].name);
+
+								var to_remove_obj = scene.getObjectByName( all_fireworks[i].name );
+
+								all_fireworks.splice(i, 1);
+//								console.log(to_remove_obj);
+								scene.remove( to_remove_obj );							
+						//	remove_firework(i);
 						}
 					}
-
-
-// //					console.log( all_fireworks.system );
-// //					scene.add( all_fireworks.system );
 				}
 
 				for (var j = 0; j < all_fireworks.length; j++) {
@@ -246,8 +278,8 @@
 				var new_geometry = new THREE.Geometry();
 
 				var new_material = new THREE.PointsMaterial({
-						size: 1,
-						color: 0xff69b4					
+						size: 5,
+						color: 0x39ff14					
 				});
 
 				var new_dest = [];
@@ -267,19 +299,20 @@
 
 					new_geometry.vertices.push(start);
 
-					new_geometry.colors.push(particle_color);
+					new_geometry.colors.push(0x39ff14);
 
 					new_dest.push(end);
 				}
 
 				all_fireworks[index].geometry = new_geometry;
+				all_fireworks[index].geometry.verticesNeedUpdate = true;
 				all_fireworks[index].material = new_material;
 				all_fireworks[index].system = new THREE.Points( new_geometry, new_material );
 				all_fireworks[index].dest = new_dest;
 
 				all_fireworks[index].system.name = all_fireworks[index].name;
 
-				scene.add( all_fireworks[index].system );
+//				scene.add( all_fireworks[index].system );
 
 			}
 
@@ -288,7 +321,7 @@
 				var to_remove = all_fireworks[i];
 //				console.log(to_remove.name);
 				var to_remove_obj = scene.getObjectByName( to_remove.name );
-				console.log(to_remove_obj);
+//				console.log(to_remove_obj);
 				scene.remove( to_remove_obj );
 				all_fireworks.splice(i, 1);
 			}

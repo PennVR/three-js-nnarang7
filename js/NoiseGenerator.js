@@ -1,4 +1,4 @@
-function generateRandomArray(size) {
+function generateRandomArray(size) { //create array of random numbers of world dimension
 	var randomArray = [];
 	var i = 0;
 	while (i < size) {
@@ -23,11 +23,9 @@ function fade(t) {
 }
 
 function noise(x, y, z, p, world_dim) {
-
 	x = x % world_dim;
 	y = y % world_dim;
 	z = z % world_dim;
-
 
 	var x_unit_left = x & 255;
 	var y_unit_left = y & 255;
@@ -41,7 +39,7 @@ function noise(x, y, z, p, world_dim) {
 	var v = fade(y_unit_right);
 	var w = fade(z_unit_right);
 
-	var hashes = hash(x_unit_left, y_unit_left, z_unit_left, p);
+	var hashes = hash(x_unit_left, y_unit_left, z_unit_left, p); //hash the different coordinates
 
 	var bottom_left, bottom_right, top_left, top_right;
 	var AAA, BAA, ABA, BBA, AAB, BAB, ABB, BBB;
@@ -74,7 +72,7 @@ function lerp(a, b, u) {
 	return a + u * (b - a);
 }
 
-function grad(x, y, z, hash) {
+function grad(x, y, z, hash) { //get appropriate gradient value for a given hash
 	var hash_and = hash & 15;
 	var gradient_val = 0;
 	switch (hash_and) {

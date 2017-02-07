@@ -17,7 +17,7 @@
 		<script src="js/VREffects.js"></script>
 		<script src="js/WebVR.js"></script>
 
-		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+		<div id="container"></div>
 
 		<script>
 			if ( !Detector.webgl ) {
@@ -41,24 +41,23 @@
 			var worldWidth = 256;
 			var worldDepth = 256;
 
-			var clock = new THREE.Clock();
-
 			init();
 			animate();
 
-
 			function init() {
-
+				//to regenerate scene
 				var regen_button = makeRegenerateButton();
 
 				document.body.appendChild(regen_button);
 
+				//setting up core objects
 				camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
 
 				camera.position.x = 300;
 
 				scene = new THREE.Scene();
 
+				//mountain terrain
 				var plane = new THREE.PlaneBufferGeometry( 7500, 7500, worldWidth - 1, worldDepth - 1);
 				plane.rotateX( - Math.PI / 2 );
 
@@ -74,18 +73,19 @@
 
 				plane.attributes.position.array = vertices;
 
-				var mountain_texture = new THREE.TextureLoader().load("images/dark-mountain.jpg");
+				var mountain_texture = new THREE.TextureLoader().load("images/night-mountain.jpg");
 				mountain_texture.wrapS = THREE.ClampToEdgeWrapping;
 				mountain_texture.wrapT = THREE.ClampToEdgeWrapping;
 
 				var mountain_material = new THREE.MeshBasicMaterial( {
 					map: mountain_texture
 				});
-//				var mountain_material = new THREE.MeshBasicMaterial({color: 0x654321});
+
 				var mountain_mesh = new THREE.Mesh( plane, mountain_material );
-				mountain_mesh.position.set(0, -100, 0);
+				mountain_mesh.position.set(0, -200, 0);
 				scene.add( mountain_mesh );
 
+				//adding sky and stars
 				var sky = new THREE.SphereGeometry(1000, 80, 80);
 				var sky_material = new THREE.MeshBasicMaterial( {color: 0x000000});
 
@@ -111,12 +111,14 @@
 				sky_mesh.material.side = THREE.BackSide;
 				scene.add( sky_mesh );
 
-				var moon_geometry = new THREE.SphereGeometry(4, 50, 50);
+				//adding moon with lighting
+				var moon_geometry = new THREE.SphereGeometry(10, 50, 50);
 				var moon_material = new THREE.MeshBasicMaterial({
 					color: 0xfee5ac
 				});
+
 				var moon = new THREE.Mesh(moon_geometry, moon_material);
-				moon.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
+				moon.position.set(camera.position.x + 30, camera.position.y + 40, camera.position.z + 10);
 				moon.material.side = THREE.BackSide;
 				scene.add(moon);
 
@@ -124,13 +126,16 @@
 				moonlight.position.set(camera.position.x + 60, camera.position.y + 40, camera.position.z + 100);
 				scene.add( moonlight );
 
+				//generating fireworks
 				createFireworks(5);
 
+				//setting up renderer
 				renderer = new THREE.WebGLRenderer();
 				renderer.setClearColor( 0x87cefa );
 				renderer.setPixelRatio(window.devicePixelRatio);
 				renderer.setSize(window.innerWidth, window.innerHeight);
 
+				//setting up orbit controls
 				orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
 				orbit_controls.addEventListener('change', render);
 				orbit_controls.enableZoom = false;
@@ -140,11 +145,11 @@
 				container.innerHTML = "";
 				container.appendChild(renderer.domElement);
 
-
 				if ( WEBVR.isAvailable() === true ) {
 					document.body.appendChild( WEBVR.getButton( effect ) );
 				}
 
+				//enable use with headset
 				if (navigator.getVRDisplays) {
 					vr_enabled = true;
 					controls = new THREE.VRControls( camera );
@@ -157,6 +162,7 @@
 						.catch(() => {});					
 				}	
 
+				//set up for resizing
 				window.addEventListener('resize', () => {
 					camera.aspect = window.innerWidth / window.innerHeight;
 					camera.updateProjectionMatrix();
@@ -176,8 +182,10 @@
 					requestAnimationFrame( animate );					
 				}
 
+				//create fireworks at arbitrary times
 				updateFireworks();		
-				createFireworks(1);			
+				createFireworks(1);	
+				//update orbit controls if mouse moved		
 				orbit_controls.update();			
 				render();
 			}
@@ -192,14 +200,15 @@
 
 			function createFireworks(num) {
 				for (var i = 0; i < num; i++) {
-					if (shouldMakeFirework()) {
-
+					if (shouldMakeFirework()) { //generate firework with certain probability
 						var dest_point = [];
 						
+						//random firework position
 						var x = THREE.Math.randInt(-1000, 1000);
 						var y = THREE.Math.randInt(150, 250);
 						var z = THREE.Math.randInt(-600, -100);	
 
+						//randomly assign start and end vectors
 						var start = new THREE.Vector3(x, -4000, z);
 						var end = new THREE.Vector3(x, y, z);
 
@@ -222,6 +231,7 @@
 
 						dest_point.push(end);
 
+						//create new firework object
 						var firework_obj = {
 							geometry: fireworks_geometry,
 							material: fireworks_material,
@@ -235,7 +245,7 @@
 						firework_obj.system.name = firework_obj.name;				
 
 						all_fireworks.push(firework_obj);		
-						scene.add( firework_obj.system );						
+						scene.add( firework_obj.system );	//add new firework object to scene					
 					}
 				}
 			}
@@ -246,11 +256,13 @@
 					var current_firework = all_fireworks[i];
 					var all_points = current_firework.geometry.vertices;
 
+					//if the particle is being shot up into the air: slower speed
 					if (all_points.length == 1) {
 						all_points[0].x += (all_fireworks[i].dest[0].x - all_points[0].x) / 100000;
 						all_points[0].y += (all_fireworks[i].dest[0].y - all_points[0].y) / 100000;
 						all_points[0].z += (all_fireworks[i].dest[0].z - all_points[0].z) / 100000;
 					} else {
+						//if the firework has already exploded: faster speed
 						for (var j = 0; j < all_points.length; j++) {
 							all_points[j].x += (all_fireworks[i].dest[j].x - all_points[j].x) / 50;
 							all_points[j].y += (all_fireworks[i].dest[j].y - all_points[j].y) / 50;
@@ -262,13 +274,13 @@
 
 					all_fireworks[i].system = new THREE.Points( all_fireworks[i].geometry, all_fireworks[i].material);	
 
-					if (all_points.length == 1) {
+					if (all_points.length == 1) { //see if firework has reached its end destination 
 						if (all_points[0].x - all_fireworks[i].dest[0].x < 0.000000000001 ||
 							all_points[0].y - all_fireworks[i].dest[0].y < 0.000000000001 ||
 							all_points[0].z - all_fireworks[i].dest[0].z < 0.000000000001) {
 								explode_firework(i);
 						}
-					} else {
+					} else { //slowly fade out the fireworks already in existence
 						all_fireworks[i].material.opacity -= 0.01
 						all_fireworks[i].material.colorsNeedUpdate = true;
 
@@ -280,9 +292,9 @@
 			}
 
 			function explode_firework(index) {	
-
+				//called when particle reaches its end destination
 				var to_explode = all_fireworks[index];
-				var to_explore_pos = to_explode.dest[0];
+				var to_explode_pos = to_explode.dest[0];
 
 				var new_geometry = new THREE.Geometry();
 
@@ -295,25 +307,27 @@
 				var new_dest = [];
 
 				for (var i = 0; i < 40; i++) {
+					//add 40 particles at the initial firework's end destination
 					var particle_color = getRandomColor();
-					var x = THREE.Math.randInt(to_explore_pos.x - 20, to_explore_pos.x + 20);
-					var y = THREE.Math.randInt(to_explore_pos.y - 20, to_explore_pos.y + 20);
-					var z = THREE.Math.randInt(to_explore_pos.z - 20, to_explore_pos.z + 20);
+					var x = THREE.Math.randInt(to_explode_pos.x - 20, to_explode_pos.x + 20);
+					var y = THREE.Math.randInt(to_explode_pos.y - 20, to_explode_pos.y + 20);
+					var z = THREE.Math.randInt(to_explode_pos.z - 20, to_explode_pos.z + 20);
 
-					var x_end = THREE.Math.randInt(to_explore_pos.x - 100, to_explore_pos.x + 100);
-					var y_end = THREE.Math.randInt(to_explore_pos.y - 100, to_explore_pos.y + 100);
-					var z_end = THREE.Math.randInt(to_explore_pos.z - 100, to_explore_pos.z + 100);
+					var x_end = THREE.Math.randInt(to_explode_pos.x - 100, to_explode_pos.x + 100);
+					var y_end = THREE.Math.randInt(to_explode_pos.y - 100, to_explode_pos.y + 100);
+					var z_end = THREE.Math.randInt(to_explode_pos.z - 100, to_explode_pos.z + 100);
 
+					//emulate structure of single particle fireworks
 					var start = new THREE.Vector3(x, y, z);
 					var end = new THREE.Vector3(x_end, y_end, z_end);	
 
 					new_geometry.vertices.push(start);
-
 					new_geometry.colors.push(getRandomColor());
 
 					new_dest.push(end);
 				}
 
+				//update firework object with new particles
 				all_fireworks[index].geometry = new_geometry;
 				all_fireworks[index].geometry.verticesNeedUpdate = true;
 				all_fireworks[index].material = new_material;
@@ -327,14 +341,14 @@
 				scene.add( all_fireworks[index].system );
 			}
 
-			function remove_firework(i) {
+			function remove_firework(i) { //remove firework from scene once it's reached its destination
 				var to_remove = all_fireworks[i];
 				var to_remove_obj = scene.getObjectByName( to_remove.name );
 				scene.remove( to_remove_obj );
 				all_fireworks.splice(i, 1);
 			}
 
-			function makeRegenerateButton() {
+			function makeRegenerateButton() { //button to regenerate the scene at will
 				var button = document.createElement( 'button' );
 				button.style.position = 'absolute';
 				button.style.left = 'calc(50% - 50px)';
@@ -354,7 +368,6 @@
 				button.onclick = function() {
 					init();
 				};
-
 				return button;				
 			}
 		</script>

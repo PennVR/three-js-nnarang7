@@ -136,9 +136,9 @@
 				renderer.setSize(window.innerWidth, window.innerHeight);
 
 				//setting up orbit controls
-				orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
-				orbit_controls.addEventListener('change', render);
-				orbit_controls.enableZoom = false;
+				// orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
+				// orbit_controls.addEventListener('change', render);
+				// orbit_controls.enableZoom = false;
 
 				var container = document.getElementById("container");
 
@@ -188,9 +188,10 @@
 				//update orbit controls if mouse moved	
 				if (vr_enabled) {
 					controls.update();
-				} else {
-					orbit_controls.update();	
-				}
+				} 
+				// else {
+				// 	orbit_controls.update();	
+				// }
 				render();
 			}
 

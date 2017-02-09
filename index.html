@@ -136,18 +136,14 @@
 				renderer.setSize(window.innerWidth, window.innerHeight);
 
 				//setting up orbit controls
-				// orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
-				// orbit_controls.addEventListener('change', render);
-				// orbit_controls.enableZoom = false;
+				orbit_controls = new THREE.OrbitControls(camera, renderer.domElement);
+				orbit_controls.addEventListener('change', render);
+				orbit_controls.enableZoom = false;
 
 				var container = document.getElementById("container");
 
 				container.innerHTML = "";
 				container.appendChild(renderer.domElement);
-
-				if ( WEBVR.isAvailable() === true ) {
-					document.body.appendChild( WEBVR.getButton( effect ) );
-				}
 
 				//enable use with headset
 				if (navigator.getVRDisplays) {
@@ -160,7 +156,11 @@
 							controls.setVRDisplay(displays[0]);
 						})
 						.catch(() => {});					
-				}	
+				}				
+
+				if ( WEBVR.isAvailable() === true ) {
+					document.body.appendChild( WEBVR.getButton( effect ) );
+				}
 
 				//set up for resizing
 				window.addEventListener('resize', () => {
@@ -188,10 +188,9 @@
 				//update orbit controls if mouse moved	
 				if (vr_enabled) {
 					controls.update();
-				} 
-				// else {
-				// 	orbit_controls.update();	
-				// }
+				} else {
+					orbit_controls.update();	
+				}
 				render();
 			}
 

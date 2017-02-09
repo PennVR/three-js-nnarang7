@@ -145,10 +145,6 @@
 				container.innerHTML = "";
 				container.appendChild(renderer.domElement);
 
-				if ( WEBVR.isAvailable() === true ) {
-					document.body.appendChild( WEBVR.getButton( effect ) );
-				}
-
 				//enable use with headset
 				if (navigator.getVRDisplays) {
 					vr_enabled = true;
@@ -161,6 +157,10 @@
 						})
 						.catch(() => {});					
 				}	
+
+				if ( WEBVR.isAvailable() === true ) {
+					document.body.appendChild( WEBVR.getButton( effect ) );
+				}				
 
 				//set up for resizing
 				window.addEventListener('resize', () => {

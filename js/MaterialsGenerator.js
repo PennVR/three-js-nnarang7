@@ -30,7 +30,7 @@ function generateStars(numStars) {
 		var x, y, z;
 
 		var x = THREE.Math.randInt(-600, 500);
-		var y = THREE.Math.randInt(30, 600);
+		var y = THREE.Math.randInt(-200, 600);
 		var z = THREE.Math.randInt(-250, 350);			
 
 		while (y < 150) {

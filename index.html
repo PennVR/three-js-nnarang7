@@ -185,8 +185,13 @@
 				//create fireworks at arbitrary times
 				updateFireworks();		
 				createFireworks(1);	
-				//update orbit controls if mouse moved		
-				orbit_controls.update();			
+				//update orbit controls if mouse moved	
+				if (vr_enabled) {
+					controls.update();
+				} else {
+					orbit_controls.update();	
+				}
+						
 				render();
 			}
 
